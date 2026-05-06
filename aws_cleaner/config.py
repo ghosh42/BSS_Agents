@@ -21,7 +21,7 @@ class ScanConfig:
     
     # LLM settings
     model_id: str = "us.meta.llama3-3-70b-instruct-v1:0"
-    model_max_tokens: int = 2048
+    model_max_tokens: int = 4096
     
     # Output
     output_format: str = "table"  # table, json, slack

@@ -201,6 +201,52 @@ def render_csv(state: Dict[str, Any]) -> str:
     return buf.getvalue()
 
 
+def render_multi_account_csv(agg: Dict[str, Any], limit: int = 1000) -> str:
+    """Render all recommendations from a multi-account sweep as CSV.
+
+    Columns include Account so rows from different profiles are identifiable.
+    Results are sorted by estimated monthly savings descending and capped at
+    ``limit`` rows (default 1000).
+    """
+    all_recs = agg.get("all_recommendations", [])
+    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+    sorted_recs = sorted(
+        all_recs,
+        key=lambda r: r.get("monthly_savings_usd", 0),
+        reverse=True,
+    )[:limit]
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+
+    accounts = agg.get("accounts_scanned", len(agg.get("by_account", {})))
+    writer.writerow([
+        f"# AWS Cleaner Agent — Top {limit} Savings ({accounts} accounts) — {generated_at}"
+    ])
+    writer.writerow([])
+    writer.writerow(["Account", "Service", "Resource ID", "Action", "Risk",
+                     "Estimated Savings/mo (USD)", "Reason"])
+
+    for rec in sorted_recs:
+        writer.writerow([
+            rec.get("_account", ""),
+            (rec.get("service") or "").upper(),
+            rec.get("resource_id", ""),
+            rec.get("action", ""),
+            rec.get("risk", ""),
+            f"{rec.get('monthly_savings_usd', 0):.2f}",
+            rec.get("reason", ""),
+        ])
+
+    if sorted_recs:
+        total = sum(r.get("monthly_savings_usd", 0) for r in sorted_recs)
+        writer.writerow([])
+        writer.writerow(["", "", "", "", "TOTAL", f"{total:.2f}", ""])
+
+    return buf.getvalue()
+
+
 def render_markdown(state: Dict[str, Any], profile: str = "", region: str = "") -> str:
     """Render a Jira/email-friendly Markdown report.
 

@@ -26,7 +26,7 @@ from aws_cleaner.agent import run_agent
 from aws_cleaner.multi_account import sweep_accounts, render_sweep_summary, aggregate_sweep
 from aws_cleaner.tools.deleter import delete_resources, render_audit_log
 from aws_cleaner.regions import sweep_regions, render_regions_summary
-from aws_cleaner.report import render_csv, render_markdown
+from aws_cleaner.report import render_csv, render_markdown, render_multi_account_csv
 
 console = Console()
 
@@ -336,8 +336,26 @@ def _handle_multi_account(
     )
     render_sweep_summary(sweep_results)
 
+    agg = aggregate_sweep(sweep_results)
+
+    # Export path — output_format / output_file from intent
+    export_format = intent.get("output_format")
+    export_file = intent.get("output_file") or None
+    if export_format == "csv" or export_file:
+        content = render_multi_account_csv(agg, limit=1000)
+        if export_file:
+            with open(export_file, "w") as f:
+                f.write(content)
+            n = len(agg["all_recommendations"])
+            console.print(
+                f"\n[bold cyan]Agent:[/bold cyan] Saved top {min(n, 1000)} recommendations "
+                f"({n} total) to [bold]{export_file}[/bold]"
+            )
+        else:
+            console.print("\n[bold cyan]Agent:[/bold cyan] CSV export (all accounts):\n")
+            print(content)
+
     if intent.get("delete"):
-        agg = aggregate_sweep(sweep_results)
         recs = agg["all_recommendations"]
         if recs:
             console.print("[yellow]\nNote: live multi-account deletion must be confirmed per profile.[/yellow]")
