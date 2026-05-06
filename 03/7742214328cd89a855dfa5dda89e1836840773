@@ -1,0 +1,14 @@
+aws_cleaner/llm.py
+  h_d1a241f7e5513b 119,125,133-136,189-207
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "037742214328cd89a855dfa5dda89e1836840773",
+  "prompts": {},
+  "humans": {
+    "h_d1a241f7e5513b": {
+      "author": "ghosh42 <111793011+ghosh42@users.noreply.github.com>"
+    }
+  }
+}
