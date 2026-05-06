@@ -92,12 +92,12 @@ def _batch_cloudwatch_metrics(cloudwatch, bucket_names: List[str]):
     now = datetime.now(timezone.utc)
     start = now - timedelta(days=3)
 
-    # Build metric queries — 2 per bucket (size + count)
+    # Build metric queries — 2 per bucket (size + count).
+    # Use a numeric index as the Id to guarantee uniqueness regardless of bucket name.
     queries = []
-    for name in bucket_names:
-        safe_id = name.replace("-", "_").replace(".", "_")[:50]
+    for idx, name in enumerate(bucket_names):
         queries.append({
-            "Id": f"size_{safe_id}",
+            "Id": f"size_{idx}",
             "MetricStat": {
                 "Metric": {
                     "Namespace": "AWS/S3",
@@ -113,7 +113,7 @@ def _batch_cloudwatch_metrics(cloudwatch, bucket_names: List[str]):
             "ReturnData": True,
         })
         queries.append({
-            "Id": f"count_{safe_id}",
+            "Id": f"count_{idx}",
             "MetricStat": {
                 "Metric": {
                     "Namespace": "AWS/S3",
@@ -145,22 +145,13 @@ def _batch_cloudwatch_metrics(cloudwatch, bucket_names: List[str]):
                 metric_id = result["Id"]
                 values = result.get("Values", [])
                 val = int(values[0]) if values else 0
-                # Recover bucket name from id prefix
+                # Recover bucket name from numeric index in the Id
                 if metric_id.startswith("size_"):
-                    raw = metric_id[5:]
+                    idx = int(metric_id[5:])
+                    size_map[bucket_names[idx]] = val
                 elif metric_id.startswith("count_"):
-                    raw = metric_id[6:]
-                else:
-                    continue
-                # Find the matching bucket name (reverse the sanitization)
-                for name in bucket_names:
-                    safe = name.replace("-", "_").replace(".", "_")[:50]
-                    if safe == raw:
-                        if metric_id.startswith("size_"):
-                            size_map[name] = val
-                        else:
-                            count_map[name] = val
-                        break
+                    idx = int(metric_id[6:])
+                    count_map[bucket_names[idx]] = val
         except Exception as e:
             logger.warning(f"CloudWatch batch metrics failed: {e} — defaulting to 0")
 

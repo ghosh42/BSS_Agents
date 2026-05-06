@@ -46,6 +46,7 @@ class BedrockLLM:
         body = json.dumps({
             "prompt": prompt,
             "max_gen_len": max_tokens,
+            "temperature": 0,
         })
 
         logger.info(f"Invoking {self.config.model_id} (max_tokens={max_tokens})")

@@ -77,13 +77,15 @@ Examples:
 - "save results to findings.csv" → output_format="csv", output_file="findings.csv"
 - "export to report.md" → output_format="markdown", output_file="report.md"
 - "write CSV to /tmp/out.csv" → output_format="csv", output_file="/tmp/out.csv"
+- "scan qa, prod and dev profiles, save to savings.csv" → profiles=["qa","prod","dev"], output_format="csv", output_file="savings.csv"
+- "scan dev, prod and qa profiles for all unused resources, save results to top1000_savings.csv" → profiles=["dev","prod","qa"], output_format="csv", output_file="top1000_savings.csv"
 """
 
 
 def parse_user_intent(llm: BedrockLLM, user_message: str) -> dict:
     """Use LLM to parse natural language into scan config."""
     prompt = f"{SYSTEM_PROMPT}\n\nUser message: {user_message}\n\nJSON response:"
-    raw = llm.invoke(prompt, max_tokens=512)
+    raw = llm.invoke(prompt, max_tokens=1024)
 
     # Extract JSON from response
     match = re.search(r'\{.*\}', raw, re.DOTALL)

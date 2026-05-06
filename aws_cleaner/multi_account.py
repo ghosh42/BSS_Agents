@@ -178,15 +178,15 @@ def render_sweep_summary(sweep_results: List[Dict[str, Any]]) -> None:
         f"[green]${agg['total_savings_usd']:.2f}[/green]/month recoverable"
     )
 
-    # Top 10 recommendations across all accounts
+    # Top 50 recommendations across all accounts
     top_recs = sorted(
         agg["all_recommendations"],
         key=lambda r: r.get("monthly_savings_usd", 0),
         reverse=True,
-    )[:10]
+    )[:50]
 
     if top_recs:
-        top_table = Table(title="[bold]Top 10 Recommendations (all accounts)[/bold]", show_lines=True)
+        top_table = Table(title="[bold]Top 50 Recommendations (all accounts)[/bold]", show_lines=True)
         top_table.add_column("Account", style="cyan", width=20)
         top_table.add_column("Service", width=6)
         top_table.add_column("Resource ID", max_width=45)
