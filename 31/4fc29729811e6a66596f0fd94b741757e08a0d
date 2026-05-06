@@ -1,0 +1,18 @@
+aws_cleaner/config.py
+  h_d1a241f7e5513b 24
+aws_cleaner/report.py
+  h_d1a241f7e5513b 204-249
+chat.py
+  h_d1a241f7e5513b 29,339-357
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "314fc29729811e6a66596f0fd94b741757e08a0d",
+  "prompts": {},
+  "humans": {
+    "h_d1a241f7e5513b": {
+      "author": "ghosh42 <111793011+ghosh42@users.noreply.github.com>"
+    }
+  }
+}
