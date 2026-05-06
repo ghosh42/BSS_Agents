@@ -6,6 +6,21 @@ Powered by **LangGraph** orchestration + **Meta Llama 3.3 70B** via Amazon Bedro
 
 ---
 
+## Tech Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| **Language** | Python | 3.12 |
+| **AI Orchestration** | LangGraph (StateGraph) | 1.1.10 |
+| **LLM** | Meta Llama 3.3 70B Instruct | via Amazon Bedrock |
+| **AWS SDK** | boto3 | 1.42.59 |
+| **LangChain AWS** | langchain-aws | 1.4.6 |
+| **LangChain Core** | langchain-core | 1.3.3 |
+| **CLI / Formatting** | Rich | 14.3.3 |
+| **AWS Services used** | S3, ECR, EBS, EC2, CloudWatch, Cost Explorer, Bedrock | — |
+
+---
+
 ## What it scans
 
 | Service | What it looks for | Default threshold |
