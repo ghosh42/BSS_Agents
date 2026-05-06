@@ -85,7 +85,14 @@ def parse_user_intent(llm: BedrockLLM, user_message: str) -> dict:
     if not match:
         raise ValueError(f"Could not parse LLM response: {raw[:200]}")
 
-    return json.loads(match.group())
+    # Use raw_decode so extra text after the first valid JSON object is ignored.
+    # This handles the case where the LLM appends a second object or trailing prose.
+    decoder = json.JSONDecoder()
+    try:
+        obj, _ = decoder.raw_decode(raw, match.start())
+        return obj
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Could not parse LLM JSON: {e} — raw: {raw[:200]}")
 
 
 def build_plain_english_report(llm: BedrockLLM, result: dict, user_message: str) -> str:
