@@ -1,0 +1,14 @@
+README.md
+  h_d1a241f7e5513b 9-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "0bcd2147f63b659adb249669546bc3d36297555a",
+  "prompts": {},
+  "humans": {
+    "h_d1a241f7e5513b": {
+      "author": "ghosh42 <111793011+ghosh42@users.noreply.github.com>"
+    }
+  }
+}
