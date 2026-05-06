@@ -45,6 +45,7 @@ When the user asks something, extract these settings from their message (use def
 - all_regions: true if user mentions "all regions", "every region", "globally", or "across regions" (default: false)
 - output_format: "csv" if user asks for CSV/spreadsheet/export, "markdown" if they want markdown/Jira/Confluence/email format, otherwise null (default: null)
 - output_file: filename to save to if user says "save to", "write to", "export to a file" etc. (e.g. "findings.csv", "report.md"). null if no file mentioned (default: null)
+- risk_filter: "SAFE" if user says "safe to delete", "safe only", "no risk", "confirmed unused", "non-active". "CAUTION" if user says "caution only". null means include all risk levels (default: null)
 
 Respond ONLY with valid JSON in this exact format:
 {
@@ -58,7 +59,8 @@ Respond ONLY with valid JSON in this exact format:
   "profiles": null,
   "all_regions": false,
   "output_format": null,
-  "output_file": null
+  "output_file": null,
+  "risk_filter": null
 }
 
 Examples:
@@ -79,6 +81,8 @@ Examples:
 - "write CSV to /tmp/out.csv" → output_format="csv", output_file="/tmp/out.csv"
 - "scan qa, prod and dev profiles, save to savings.csv" → profiles=["qa","prod","dev"], output_format="csv", output_file="savings.csv"
 - "scan dev, prod and qa profiles for all unused resources, save results to top1000_savings.csv" → profiles=["dev","prod","qa"], output_format="csv", output_file="top1000_savings.csv"
+- "only safe to delete buckets, save to safe.csv" → risk_filter="SAFE", output_format="csv", output_file="safe.csv"
+- "scan all profiles, save only safe non-active resources to safe_savings.csv" → profiles=[...], risk_filter="SAFE", output_format="csv", output_file="safe_savings.csv"
 """
 
 
@@ -336,7 +340,10 @@ def _handle_multi_account(
         base_config=base_config,
         region=region,
     )
-    render_sweep_summary(sweep_results)
+
+    # Determine risk_filter early so terminal table + CSV both use it
+    risk_filter = (intent.get("risk_filter") or "").upper() or None
+    render_sweep_summary(sweep_results, risk_filter=risk_filter)
 
     agg = aggregate_sweep(sweep_results)
 
@@ -344,17 +351,20 @@ def _handle_multi_account(
     export_format = intent.get("output_format")
     export_file = intent.get("output_file") or None
     if export_format == "csv" or export_file:
-        content = render_multi_account_csv(agg, limit=1000)
+        content = render_multi_account_csv(agg, limit=1000, risk_filter=risk_filter)
+        all_n = len(agg["all_recommendations"])
+        filtered_n = len([r for r in agg["all_recommendations"]
+                          if not risk_filter or (r.get("risk") or "").upper() == risk_filter])
+        label = f"{risk_filter}-only " if risk_filter else ""
         if export_file:
             with open(export_file, "w") as f:
                 f.write(content)
-            n = len(agg["all_recommendations"])
             console.print(
-                f"\n[bold cyan]Agent:[/bold cyan] Saved top {min(n, 1000)} recommendations "
-                f"({n} total) to [bold]{export_file}[/bold]"
+                f"\n[bold cyan]Agent:[/bold cyan] Saved {filtered_n} {label}recommendations "
+                f"({all_n} total across all accounts) to [bold]{export_file}[/bold]"
             )
         else:
-            console.print("\n[bold cyan]Agent:[/bold cyan] CSV export (all accounts):\n")
+            console.print(f"\n[bold cyan]Agent:[/bold cyan] CSV export ({label}all accounts):\n")
             print(content)
 
     if intent.get("delete"):

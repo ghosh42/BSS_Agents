@@ -143,7 +143,7 @@ def aggregate_sweep(sweep_results: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 # ─── Rich rendering ────────────────────────────────────────────────────────────
 
-def render_sweep_summary(sweep_results: List[Dict[str, Any]]) -> None:
+def render_sweep_summary(sweep_results: List[Dict[str, Any]], risk_filter: Optional[str] = None) -> None:
     """Print a Rich per-account summary table + aggregate totals."""
     agg = aggregate_sweep(sweep_results)
 
@@ -178,15 +178,20 @@ def render_sweep_summary(sweep_results: List[Dict[str, Any]]) -> None:
         f"[green]${agg['total_savings_usd']:.2f}[/green]/month recoverable"
     )
 
-    # Top 50 recommendations across all accounts
+    # Top 50 recommendations across all accounts (filtered if risk_filter set)
+    all_recs = agg["all_recommendations"]
+    if risk_filter:
+        all_recs = [r for r in all_recs
+                    if (r.get("risk") or "").upper() == risk_filter.upper()]
     top_recs = sorted(
-        agg["all_recommendations"],
+        all_recs,
         key=lambda r: r.get("monthly_savings_usd", 0),
         reverse=True,
     )[:50]
 
+    filter_label = f" [{risk_filter}-only]" if risk_filter else ""
     if top_recs:
-        top_table = Table(title="[bold]Top 50 Recommendations (all accounts)[/bold]", show_lines=True)
+        top_table = Table(title=f"[bold]Top 50 Recommendations (all accounts){filter_label}[/bold]", show_lines=True)
         top_table.add_column("Account", style="cyan", width=20)
         top_table.add_column("Service", width=6)
         top_table.add_column("Resource ID", max_width=45)
