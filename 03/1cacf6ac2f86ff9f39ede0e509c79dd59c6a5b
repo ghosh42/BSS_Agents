@@ -1,0 +1,20 @@
+aws_cleaner/tools/s3_scanner.py
+  h_d1a241f7e5513b 95-96,98,100,116,148,150-151,153-154
+chat.py
+  h_d1a241f7e5513b 80-81,88
+aws_cleaner/llm.py
+  h_d1a241f7e5513b 49
+aws_cleaner/multi_account.py
+  h_d1a241f7e5513b 181,186,189
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "031cacf6ac2f86ff9f39ede0e509c79dd59c6a5b",
+  "prompts": {},
+  "humans": {
+    "h_d1a241f7e5513b": {
+      "author": "ghosh42 <111793011+ghosh42@users.noreply.github.com>"
+    }
+  }
+}
