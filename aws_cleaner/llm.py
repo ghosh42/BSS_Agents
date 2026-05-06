@@ -116,22 +116,24 @@ Total unused resources found: {total_count} (analyzing batch {batch_num}/{total_
 {json.dumps(batch_cost, indent=2, default=str)}
 
 ## S3 Storage Cost Reference
-- Standard tier: ~$0.023 per GB/month
+- Standard tier after enterprise discount: ~$0.016 per GB/month (list $0.023 * 0.7 discount)
 - 1 GB = 1,073,741,824 bytes
 
 ## Instructions
 For each resource, provide:
 1. **Risk Level**: SAFE (can delete immediately), CAUTION (verify first), DANGEROUS (likely needed)
-2. **Estimated Monthly Savings** in USD (calculate from size_bytes for S3: size_bytes/1073741824 * 0.023)
+2. **Estimated Monthly Savings** in USD (calculate from size_bytes for S3: size_bytes/1073741824 * 0.016)
 3. **Recommended Action**: DELETE, ARCHIVE, RESIZE, INVESTIGATE, or KEEP
 4. **Reason**: Brief explanation (1 sentence max)
 
 Risk rules — always base decisions on the data fields, never on bucket name alone:
 - `days_since_modified` is the authoritative freshness signal.  Do NOT use bucket name to guess activity.
-- days_since_modified < 30, OR last_modified_unreliable=true: DANGEROUS, KEEP — do not flag
+- days_since_modified < 30: DANGEROUS, KEEP — do not flag
 - days_since_modified 30–89: CAUTION, INVESTIGATE
-- days_since_modified 90–364: CAUTION for any bucket with size_bytes > 0; SAFE only for empty buckets
-- days_since_modified >= 365 AND last_modified_unreliable=false: SAFE, DELETE or ARCHIVE
+- days_since_modified 90–239 AND last_modified_unreliable=false: CAUTION for any bucket with size_bytes > 0; SAFE only for empty buckets
+- days_since_modified 90–239 AND last_modified_unreliable=true: CAUTION, INVESTIGATE
+- days_since_modified >= 240 AND last_modified_unreliable=false: SAFE, DELETE or ARCHIVE
+- days_since_modified >= 240 AND last_modified_unreliable=true: SAFE, DELETE or ARCHIVE (CloudWatch already confirmed no growth; the scan cap was hit but 240+ days of inactivity is sufficient evidence)
 - days_since_modified is null (unknown): CAUTION — cannot confirm inactivity
 - size_bytes=0 AND object_count=0 (truly empty): SAFE, DELETE, $0 savings regardless of bucket name
 
@@ -183,5 +185,25 @@ Respond ONLY with a valid JSON array, no preamble, no explanation:
                     logger.debug(f"  Batch {batch_num}: LLM returned non-JSON response")
             except Exception as e:
                 logger.debug(f"  Batch {batch_num} failed: {e}")
+
+        # Deterministic post-processing: override LLM risk based on hard data rules.
+        # This removes non-determinism from the LLM classification.
+        resource_lookup = {r["resource_id"]: r for r in all_resources}
+        for rec in all_recommendations:
+            src = resource_lookup.get(rec.get("resource_id"), {})
+            days = src.get("days_since_modified")
+            obj_count = src.get("object_count", 0)
+            size = src.get("size_bytes", 0)
+            if days is not None and days >= 240:
+                # CloudWatch already filtered out growing buckets before this stage
+                if rec.get("risk", "").upper() != "SAFE":
+                    logger.debug(f"Overriding {rec.get('resource_id')} risk to SAFE (days={days})")
+                rec["risk"] = "SAFE"
+                if rec.get("action") == "KEEP":
+                    rec["action"] = "DELETE" if size == 0 else "ARCHIVE"
+            elif days is not None and days < 30:
+                rec["risk"] = "DANGEROUS"
+            elif obj_count == 0 and size == 0:
+                rec["risk"] = "SAFE"
 
         return json.dumps(all_recommendations)
