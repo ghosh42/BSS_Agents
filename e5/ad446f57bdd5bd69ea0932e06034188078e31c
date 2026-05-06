@@ -1,0 +1,16 @@
+aws_cleaner/multi_account.py
+  h_d1a241f7e5513b 146,181-185,187,192,194
+chat.py
+  h_d1a241f7e5513b 48,62-63,84-85,344-346,354-358,363-364,367
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "e5ad446f57bdd5bd69ea0932e06034188078e31c",
+  "prompts": {},
+  "humans": {
+    "h_d1a241f7e5513b": {
+      "author": "ghosh42 <111793011+ghosh42@users.noreply.github.com>"
+    }
+  }
+}
