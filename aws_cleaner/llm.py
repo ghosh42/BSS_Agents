@@ -126,11 +126,14 @@ For each resource, provide:
 3. **Recommended Action**: DELETE, ARCHIVE, RESIZE, INVESTIGATE, or KEEP
 4. **Reason**: Brief explanation (1 sentence max)
 
-Rules:
-- Empty S3 buckets (size_bytes=0): SAFE, DELETE, $0 savings
-- Old CloudTrail/flow logs with no activity for years: SAFE, DELETE
-- Buckets with data last modified 1+ years ago: CAUTION, ARCHIVE or DELETE
-- Active-looking buckets (vusage-export, config buckets): CAUTION, INVESTIGATE
+Risk rules — always base decisions on the data fields, never on bucket name alone:
+- `days_since_modified` is the authoritative freshness signal.  Do NOT use bucket name to guess activity.
+- days_since_modified < 30, OR last_modified_unreliable=true: DANGEROUS, KEEP — do not flag
+- days_since_modified 30–89: CAUTION, INVESTIGATE
+- days_since_modified 90–364: CAUTION for any bucket with size_bytes > 0; SAFE only for empty buckets
+- days_since_modified >= 365 AND last_modified_unreliable=false: SAFE, DELETE or ARCHIVE
+- days_since_modified is null (unknown): CAUTION — cannot confirm inactivity
+- size_bytes=0 AND object_count=0 (truly empty): SAFE, DELETE, $0 savings regardless of bucket name
 
 Respond ONLY with a valid JSON array, no preamble, no explanation:
 [
