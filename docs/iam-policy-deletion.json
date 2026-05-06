@@ -1,0 +1,52 @@
+{
+  "_comment": "AWS Cleaner Agent — DELETION policy (restricted, requires --delete --confirm)",
+  "_description": "ONLY attach this to a dedicated role used for cleanup operations. Recommend requiring MFA to assume this role. Do NOT attach to general developer IAM users.",
+  "_warning": "Resources deleted by this policy are IRREVERSIBLE. Attach to a dedicated aws-cleaner-delete role with require-MFA condition.",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3Deletion",
+      "Effect": "Allow",
+      "Action": [
+        "s3:DeleteObject",
+        "s3:DeleteObjectVersion",
+        "s3:DeleteBucket",
+        "s3:ListBucketVersions",
+        "s3:ListBucket"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECRDeletion",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:BatchDeleteImage",
+        "ecr:ListImages"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EBSDeletion",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DeleteVolume",
+        "ec2:DescribeVolumes"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EC2Termination",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:TerminateInstances",
+        "ec2:DescribeInstances"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringEquals": {
+          "ec2:InstanceLifecycle": "stopped"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "_comment": "AWS Cleaner Agent — READ-ONLY scan policy (safe for all users)",
+  "_description": "Attach this to the IAM user/role that runs aws-cleaner-agent in scan-only mode. No resources can be modified or deleted with this policy.",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "S3ReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListAllMyBuckets",
+        "s3:ListBucket",
+        "s3:GetBucketLocation",
+        "s3:GetBucketTagging",
+        "s3:GetBucketVersioning",
+        "s3:GetBucketLogging",
+        "s3:GetLifecycleConfiguration"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ECRReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "ecr:DescribeRepositories",
+        "ecr:DescribeImages",
+        "ecr:ListImages",
+        "ecr:GetRepositoryPolicy"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EC2EBSReadOnly",
+      "Effect": "Allow",
+      "Action": [
+        "ec2:DescribeInstances",
+        "ec2:DescribeVolumes",
+        "ec2:DescribeRegions",
+        "ec2:DescribeTags"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CloudWatchMetrics",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:GetMetricData",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:ListMetrics"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "CostExplorer",
+      "Effect": "Allow",
+      "Action": [
+        "ce:GetCostAndUsage",
+        "ce:GetCostForecast",
+        "ce:GetDimensionValues"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "BedrockInvoke",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel"
+      ],
+      "Resource": "arn:aws:bedrock:*::foundation-model/meta.llama3*"
+    }
+  ]
+}
