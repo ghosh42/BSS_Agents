@@ -67,6 +67,11 @@ def parse_args():
         help="Output format: table (default), json, csv, markdown",
     )
     parser.add_argument(
+        "--output-file",
+        help="Write output to this file instead of stdout (e.g. findings.csv). "
+             "Format is inferred from the extension (.csv / .md / .json) unless --output is also set.",
+    )
+    parser.add_argument(
         "--skip-llm", action="store_true",
         help="Skip LLM analysis (discovery only)",
     )
@@ -187,15 +192,30 @@ def main():
         else:
             render_discovery_summary(result.get("discovered_resources", {}), to_stderr=(args.output != "table"))
 
+        # Infer format from --output-file extension if --output not explicitly changed
+        output_format = args.output
+        if args.output_file and args.output == "table":
+            ext = args.output_file.rsplit(".", 1)[-1].lower()
+            output_format = {"csv": "csv", "json": "json", "md": "markdown", "markdown": "markdown"}.get(ext, "csv")
+
         # Render output
-        if args.output == "json":
-            print(render_json(result))
-        elif args.output == "csv":
-            print(render_csv(result))
-        elif args.output == "markdown":
-            print(render_markdown(result, profile=config.aws_profile, region=config.aws_region))
+        if output_format == "json":
+            content = render_json(result)
+        elif output_format == "csv":
+            content = render_csv(result)
+        elif output_format == "markdown":
+            content = render_markdown(result, profile=config.aws_profile, region=config.aws_region)
         else:
             render_table(result)
+            content = None
+
+        if content is not None:
+            if args.output_file:
+                with open(args.output_file, "w") as f:
+                    f.write(content)
+                stderr_console.print(f"[green]✓[/green] Saved to [bold]{args.output_file}[/bold]")
+            else:
+                print(content)
 
         # ── Deletion ─────────────────────────────────────────────────────────
         if args.delete:

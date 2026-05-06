@@ -44,6 +44,7 @@ When the user asks something, extract these settings from their message (use def
 - profiles: list of AWS profile names if user mentions multiple accounts/profiles/environments (default: null)
 - all_regions: true if user mentions "all regions", "every region", "globally", or "across regions" (default: false)
 - output_format: "csv" if user asks for CSV/spreadsheet/export, "markdown" if they want markdown/Jira/Confluence/email format, otherwise null (default: null)
+- output_file: filename to save to if user says "save to", "write to", "export to a file" etc. (e.g. "findings.csv", "report.md"). null if no file mentioned (default: null)
 
 Respond ONLY with valid JSON in this exact format:
 {
@@ -56,7 +57,8 @@ Respond ONLY with valid JSON in this exact format:
   "delete": false,
   "profiles": null,
   "all_regions": false,
-  "output_format": null
+  "output_format": null,
+  "output_file": null
 }
 
 Examples:
@@ -72,6 +74,9 @@ Examples:
 - "give me a CSV" → output_format="csv"
 - "show as markdown I can paste in Jira" → output_format="markdown"
 - "export for email" → output_format="markdown"
+- "save results to findings.csv" → output_format="csv", output_file="findings.csv"
+- "export to report.md" → output_format="markdown", output_file="report.md"
+- "write CSV to /tmp/out.csv" → output_format="csv", output_file="/tmp/out.csv"
 """
 
 
@@ -228,14 +233,26 @@ def run_chat(profile: str, region: str):
 
         # Step 4: Structured export OR plain English response
         export_format = intent.get("output_format")
+        export_file = intent.get("output_file") or None
         if export_format == "csv":
-            console.print(f"[bold cyan]Agent:[/bold cyan] Here's your CSV export:\n")
-            print(render_csv(result))
+            content = render_csv(result)
+            if export_file:
+                with open(export_file, "w") as f:
+                    f.write(content)
+                console.print(f"[bold cyan]Agent:[/bold cyan] CSV saved to [bold]{export_file}[/bold] ({len(result.get('recommendations', []))} recommendations)")
+            else:
+                console.print(f"[bold cyan]Agent:[/bold cyan] Here's your CSV export:\n")
+                print(content)
             console.print()
         elif export_format == "markdown":
-            console.print(f"[bold cyan]Agent:[/bold cyan] Here's your Markdown report (paste into Jira / email):\n")
-            md_text = render_markdown(result, profile=scan_config.aws_profile, region=scan_config.aws_region)
-            print(md_text)
+            content = render_markdown(result, profile=scan_config.aws_profile, region=scan_config.aws_region)
+            if export_file:
+                with open(export_file, "w") as f:
+                    f.write(content)
+                console.print(f"[bold cyan]Agent:[/bold cyan] Markdown report saved to [bold]{export_file}[/bold]")
+            else:
+                console.print(f"[bold cyan]Agent:[/bold cyan] Here's your Markdown report (paste into Jira / email):\n")
+                print(content)
             console.print()
         elif total == 0:
             reply = "Great news — I didn't find any unused resources matching your criteria. Your account looks clean for those services."
